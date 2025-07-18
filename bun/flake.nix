@@ -3,35 +3,34 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    systems.url = "github:nix-systems/default";
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-      inputs.systems.follows = "systems";
-    };
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs =
-    { nixpkgs
-    , flake-utils
-    , ...
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-        };
-      in
-      {
-        devShells.default = pkgs.mkShell {
-          name = "terraform dev shell";
-          packages = with pkgs; [
-            bun
+  outputs = inputs@{ flake-parts, nixpkgs, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "aarch64-darwin" ];
 
-            xc
-            cocogitto
+      perSystem = { system, pkgs, ... }:
+        let
+          shared = import ../nix/shared.nix { inherit pkgs; };
+          bunPackages = with pkgs; shared.commonPackages ++ [
+            bun
           ];
+        in
+        {
+          devShells.default = pkgs.mkShell {
+            name = "bun dev shell";
+            packages = bunPackages;
+          };
+
+          # expose packages for root flake
+          packages = builtins.listToAttrs (map
+            (pkg: {
+              name = pkg.pname or "unnamed";
+              value = pkg;
+            })
+            bunPackages);
+
         };
-      }
-    );
+    };
 }

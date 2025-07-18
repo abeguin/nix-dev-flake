@@ -1,38 +1,39 @@
 {
-  description = "Nix flake for terraform projects";
+  description = "Nix flake for opentofu projects";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    systems.url = "github:nix-systems/default";
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-      inputs.systems.follows = "systems";
-    };
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs =
-    { nixpkgs
-    , flake-utils
-    , ...
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-        };
-      in
-      {
-        devShells.default = pkgs.mkShell {
-          name = "terraform dev shell";
-          packages = with pkgs; [
+  outputs = inputs@{ flake-parts, nixpkgs, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "aarch64-darwin" ];
+
+      perSystem = { system, pkgs, ... }:
+        let
+          shared = import ../nix/shared.nix { inherit pkgs; };
+          tofuPackages = with pkgs; shared.commonPackages ++ [
             opentofu
             #awscli2
-
-            xc
-            cocogitto
+            tflint
+            tflint-plugins.tflint-ruleset-google
+            tflint-plugins.tflint-ruleset-aws
           ];
+        in
+        {
+          devShells.default = pkgs.mkShell {
+            name = "tofu dev shell";
+            packages = tofuPackages;
+          };
+
+          # expose packages for root flake
+          packages = builtins.listToAttrs (map
+            (pkg: {
+              name = pkg.pname or "unnamed";
+              value = pkg;
+            })
+            tofuPackages);
         };
-      }
-    );
+    };
 }

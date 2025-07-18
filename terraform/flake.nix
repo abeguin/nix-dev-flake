@@ -1,39 +1,41 @@
 {
-  description = "Nix flake for terraform projects";
+  description = "Terraform dev environment flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    systems.url = "github:nix-systems/default";
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-      inputs.systems.follows = "systems";
-    };
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs =
-    { nixpkgs
-    , flake-utils
-    , ...
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import nixpkgs {
-          config.allowUnfree = true;
-          inherit system;
-        };
-      in
-      {
-        devShells.default = pkgs.mkShell {
-          name = "terraform dev shell";
-          packages = with pkgs; [
-            terraform
-            #awscli2
+  outputs = inputs@{ flake-parts, nixpkgs, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "aarch64-darwin" ];
 
-            xc
-            cocogitto
+      perSystem = { system, pkgs, ... }:
+        let
+          pkgs = import ../nix/unfree-pkgs.nix { inherit nixpkgs system; };
+          shared = import ../nix/shared.nix { inherit pkgs; };
+          terraformPackages = with pkgs; shared.commonPackages ++ [
+            terraform
+            # awscli2
+            tflint
+            tflint-plugins.tflint-ruleset-google
+            tflint-plugins.tflint-ruleset-aws
           ];
+        in
+        {
+          devShells.default = pkgs.mkShell {
+            name = "terraform dev shell";
+            packages = terraformPackages;
+          };
+
+          # expose terraformPackages for root flake
+          packages = builtins.listToAttrs (map
+            (pkg: {
+              name = pkg.pname or "unnamed";
+              value = pkg;
+            })
+            terraformPackages);
+
         };
-      }
-    );
+    };
 }

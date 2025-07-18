@@ -3,38 +3,37 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    systems.url = "github:nix-systems/default";
-    flake-utils = {
-      url = "github:numtide/flake-utils";
-      inputs.systems.follows = "systems";
-    };
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs =
-    { nixpkgs
-    , flake-utils
-    , ...
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-        };
-      in
-      {
-        devShells.default = pkgs.mkShell {
-          name = "python dev shell";
-          packages = with pkgs; [
+  outputs = inputs@{ flake-parts, nixpkgs, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "aarch64-darwin" ];
+
+      perSystem = { system, pkgs, ... }:
+        let
+          shared = import ../nix/shared.nix { inherit pkgs; };
+          pythonPackages = with pkgs; shared.commonPackages ++ [
             uv
             python313
             python313Packages.venvShellHook
-
-            xc
-            cocogitto
           ];
-          venvDir = ".venv";
+        in
+        {
+          devShells.default = pkgs.mkShell {
+            name = "python dev shell";
+            packages = pythonPackages;
+            venvDir = ".venv";
+          };
+
+          # expose packages for root flake
+          packages = builtins.listToAttrs (map
+            (pkg: {
+              name = pkg.pname or "unnamed";
+              value = pkg;
+            })
+            pythonPackages);
+
         };
-      }
-    );
+    };
 }
