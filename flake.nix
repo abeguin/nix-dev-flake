@@ -8,9 +8,10 @@
     terraform.url = ./terraform;
     bun.url = ./bun;
     tofu.url = ./opentofu;
+    flutter.url = ./flutter;
   };
 
-  outputs = inputs@{ flake-parts, nixpkgs, python, terraform, bun, tofu, ... }:
+  outputs = inputs@{ flake-parts, nixpkgs, python, terraform, bun, tofu, flutter, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "aarch64-darwin" ];
 
@@ -23,12 +24,14 @@
           pythonPkgs = builtins.attrValues python.packages.${system};
           tofuPkgs = builtins.attrValues tofu.packages.${system};
           bunPkgs = builtins.attrValues bun.packages.${system};
+          flutterPkgs = builtins.attrValues flutter.packages.${system};
 
           combined = pkgs.lib.lists.unique (shared.commonPackages ++
             pythonPkgs ++
             terraformPkgs ++
             tofuPkgs ++
-            bunPkgs
+            bunPkgs ++
+            flutterPkgs
           );
         in
         {
@@ -47,6 +50,7 @@
           devShells.terraform = terraform.devShells.${system}.default;
           devShells.tofu = tofu.devShells.${system}.default;
           devShells.bun = bun.devShells.${system}.default;
+          devShells.flutter = flutter.devShells.${system}.default;
         };
     };
 }

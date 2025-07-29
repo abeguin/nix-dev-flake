@@ -1,7 +1,7 @@
 # 🧊 nix-dev-flake
 
 A modular collection of [Nix flakes](https://nixos.wiki/wiki/Flakes) organized by development technologies — **Bun**, *
-*Python**, **Terraform**, and **OpenTofu** — with a shared Nix shell environment and a unified root flake for
+*Python**, **Terraform**, **Flutter** and **OpenTofu** — with a shared Nix shell environment and a unified root flake for
 streamlined development.
 
 ---
@@ -11,6 +11,7 @@ streamlined development.
 ```
 .
 ├── bun/           # Flake for Bun (JS/TS) development
+├── flutter/       # Flake for Flutter development
 ├── python/        # Flake for Python development with venv support
 ├── terraform/     # Flake for Terraform
 ├── opentofu/      # Flake for OpenTofu 
@@ -67,6 +68,7 @@ nix develop .#python
 nix develop .#bun
 nix develop .#terraform
 nix develop .#opentofu
+nix develop .#flutter
 ```
 
 Or configure [nix-direnv](https://github.com/nix-community/nix-direnv) (should be installed separately) with a .envrc in
