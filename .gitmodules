@@ -1,0 +1,3 @@
+[submodule "nix-common-packages"]
+	path = nix-common-packages
+	url = git@github.com:abeguin/nix-common-packages.git
