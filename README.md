@@ -78,6 +78,27 @@ use flake
 
 ---
 
+## ❅ Flake templates
+
+You can also use this directly using [nix flake init](https://nix.dev/manual/nix/2.18/command-ref/new-cli/nix3-flake-init).
+
+```bash
+# default full stack
+nix flake init -t  github:abeguin/nix-dev-flake
+# bun
+nix flake init -t  github:abeguin/nix-dev-flake#bun
+# python
+nix flake init -t  github:abeguin/nix-dev-flake#python
+# opentofu
+nix flake init -t  github:abeguin/nix-dev-flake#opentofu
+# terraform
+nix flake init -t  github:abeguin/nix-dev-flake#terraform
+```
+
+This allows to easily bootstrap a repository
+
+---
+
 ## 📦 Technology Breakdown
 
 | Folder       | Purpose                        | Tools Included                     |

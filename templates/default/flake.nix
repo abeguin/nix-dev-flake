@@ -13,30 +13,6 @@
   outputs = inputs@{ flake-parts, nixpkgs, python, terraform, bun, tofu, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
-      flake = {
-        templates = {
-          default = {
-            path = ./templates/default;
-            description = "Default flake (full-stack)";
-          };
-          bun = {
-            path = ./templates/bun;
-            description =  "Bun flake";
-          };
-          opentofu = {
-            path = ./templates/opentofu;
-            description =  "Opentofu flake";
-          };
-          python = {
-            path = ./templates/python;
-            description =  "Python flake";
-          };
-          terraform = {
-            path = ./templates/terraform;
-            description = "Terraform flake";
-          };
-        };
-      };
       perSystem = { system, ... }:
         let
           pkgs = import ./nix/unfree-pkgs.nix { inherit nixpkgs system; };
