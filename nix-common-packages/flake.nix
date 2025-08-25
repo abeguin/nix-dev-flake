@@ -6,25 +6,24 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
-  outputs = inputs@{ flake-parts, nixpkgs }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-darwin" "aarch64-darwin" ];
+  outputs = { self, ... }@inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64_linux" "x86_64-darwin" "aarch64-darwin" ];
 
-      perSystem = { system, ... }:
+      perSystem = { system, pkgs, ... }:
         let
-          pkgs = with nixpkgs; [
+          pkgsList = with pkgs; [
             xc
             cocogitto
           ];
         in
         {
-          # expose packages
           packages = builtins.listToAttrs (map
             (pkg: {
               name = pkg.pname or "unnamed";
               value = pkg;
             })
-            pkgs);
+            pkgsList);
         };
     };
 }
