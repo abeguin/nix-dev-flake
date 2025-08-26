@@ -4,18 +4,19 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    common-pkgs.url = "github:abeguin/nix-common-packages";
   };
 
-  outputs = inputs@{ flake-parts, nixpkgs, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-darwin" ];
+  outputs = { self, ... }@inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
 
       perSystem = { system, pkgs, ... }:
         let
-          shared = import ../nix/shared.nix { inherit pkgs; };
-          tofuPackages = with pkgs; shared.commonPackages ++ [
+          commonPackages = builtins.attrValues inputs.common-pkgs.packages.${system};
+          tofuPackages = with pkgs; commonPackages ++ [
             opentofu
-            #awscli2
+            # awscli2
             tflint
             tflint-plugins.tflint-ruleset-google
             tflint-plugins.tflint-ruleset-aws

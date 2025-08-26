@@ -4,23 +4,28 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    common-pkgs.url = "github:abeguin/nix-common-packages";
   };
 
-  outputs = inputs@{ flake-parts, nixpkgs, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-darwin" ];
+  outputs = { self, ... }@inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
 
       perSystem = { system, pkgs, ... }:
         let
-          pkgs = import ../nix/unfree-pkgs.nix { inherit nixpkgs system; };
-          shared = import ../nix/shared.nix { inherit pkgs; };
-          terraformPackages = with pkgs; shared.commonPackages ++ [
-            terraform
-            # awscli2
-            tflint
-            tflint-plugins.tflint-ruleset-google
-            tflint-plugins.tflint-ruleset-aws
-          ];
+          unfree = import pkgs {
+            system = system;
+            config.allowUnfree = true;
+          };
+          commonPackages = builtins.attrValues inputs.common-pkgs.packages.${system};
+          terraformPackages = [ unfree.terraform ] ++
+            (with pkgs; commonPackages ++ [
+              terraform
+              # awscli2
+              tflint
+              tflint-plugins.tflint-ruleset-google
+              tflint-plugins.tflint-ruleset-aws
+            ]);
         in
         {
           devShells.default = pkgs.mkShell {
@@ -35,7 +40,6 @@
               value = pkg;
             })
             terraformPackages);
-
         };
     };
 }
