@@ -4,50 +4,61 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    python.url = ./python;
-    terraform.url = ./terraform;
-    bun.url = ./bun;
-    tofu.url = ./opentofu;
+    common-pkgs.url = "github:abeguin/nix-common-packages";
+    python = {
+      url = ./python;
+      inputs.common-pkgs.follows = "common-pkgs";
+    };
+    terraform = {
+      url = ./terraform;
+      inputs.common-pkgs.follows = "common-pkgs";
+    };
+    bun = {
+      url = ./bun;
+      inputs.common-pkgs.follows = "common-pkgs";
+    };
+    tofu = {
+      url = ./opentofu;
+      inputs.common-pkgs.follows = "common-pkgs";
+    };
   };
 
-  outputs = inputs@{ flake-parts, nixpkgs, python, terraform, bun, tofu, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = { self, ... }@inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
       flake = {
         templates = {
           default = {
-            path = ./templates/default;
-            description = "Default flake (full-stack)";
+            path = ./default;
+            description = "Default flake";
           };
           bun = {
-            path = ./templates/bun;
-            description =  "Bun flake";
+            path = ./bun;
+            description = "Bun flake";
           };
           opentofu = {
-            path = ./templates/opentofu;
-            description =  "Opentofu flake";
+            path = ./opentofu;
+            description = "Opentofu flake";
           };
           python = {
-            path = ./templates/python;
-            description =  "Python flake";
+            path = ./python;
+            description = "Python flake";
           };
           terraform = {
-            path = ./templates/terraform;
+            path = ./terraform;
             description = "Terraform flake";
           };
         };
       };
-      perSystem = { system, ... }:
+      perSystem = { system, pkgs, ... }:
         let
-          pkgs = import ./nix/unfree-pkgs.nix { inherit nixpkgs system; };
-          shared = import ./nix/shared.nix { inherit pkgs; };
+          commonPackages = builtins.attrValues inputs.common-pkgs.packages.${system};
+          terraformPkgs = builtins.attrValues inputs.terraform.packages.${system};
+          pythonPkgs = builtins.attrValues inputs.python.packages.${system};
+          tofuPkgs = builtins.attrValues inputs.tofu.packages.${system};
+          bunPkgs = builtins.attrValues inputs.bun.packages.${system};
 
-          terraformPkgs = builtins.attrValues terraform.packages.${system};
-          pythonPkgs = builtins.attrValues python.packages.${system};
-          tofuPkgs = builtins.attrValues tofu.packages.${system};
-          bunPkgs = builtins.attrValues bun.packages.${system};
-
-          combined = pkgs.lib.lists.unique (shared.commonPackages ++
+          combined = pkgs.lib.lists.unique (commonPackages ++
             pythonPkgs ++
             terraformPkgs ++
             tofuPkgs ++
@@ -66,10 +77,10 @@
             '';
           };
 
-          devShells.python = python.devShells.${system}.default;
-          devShells.terraform = terraform.devShells.${system}.default;
-          devShells.tofu = tofu.devShells.${system}.default;
-          devShells.bun = bun.devShells.${system}.default;
+          devShells.python = inputs.python.devShells.${system}.default;
+          devShells.terraform = inputs.terraform.devShells.${system}.default;
+          devShells.tofu = inputs.tofu.devShells.${system}.default;
+          devShells.bun = inputs.bun.devShells.${system}.default;
         };
     };
 }

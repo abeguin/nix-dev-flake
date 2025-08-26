@@ -4,16 +4,17 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    common-pkgs.url = "github:abeguin/nix-common-packages";
   };
 
-  outputs = inputs@{ flake-parts, nixpkgs, ... }:
-    flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = { self, ... }@inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
 
       perSystem = { system, pkgs, ... }:
         let
-          shared = import ../nix/shared.nix { inherit pkgs; };
-          bunPackages = with pkgs; shared.commonPackages ++ [
+          commonPackages = builtins.attrValues inputs.common-pkgs.packages.${system};
+          bunPackages = with pkgs; commonPackages ++ [
             bun
           ];
         in
@@ -30,7 +31,6 @@
               value = pkg;
             })
             bunPackages);
-
         };
     };
 }
