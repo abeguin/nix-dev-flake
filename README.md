@@ -14,10 +14,9 @@ streamlined development.
 ├── python/        # Flake for Python development with venv support
 ├── terraform/     # Flake for Terraform
 ├── opentofu/      # Flake for OpenTofu 
-├── nix/
-│   ├── shared.nix         # Shared/common packages and utilities
-│   └── unfree-pkgs.nix    # Opt-in unfree package support
-└── flake.nix      # Root flake that imports and merges all dev environments
+└── flake.nix      # Root flake that
+                   #   - imports and merges all dev environments
+                   #   - expose templates by technology
 ```
 
 ---
@@ -26,7 +25,7 @@ streamlined development.
 
 - ✅ **Per-technology dev shells** (`nix develop .#bun`, `.python`, `.terraform`, etc.)
 - ✅ **Unified shell** (`nix develop`) with all tools from all stacks
-- ✅ Centralized **shared dependencies** in `nix/shared.nix`
+- ✅ Centralized **shared dependencies** in `abeguin/nix-common-packages`
 - ✅ Modular and maintainable configuration using [`flake-parts`](https://github.com/hercules-ci/flake-parts)
 - ✅ Declarative, reproducible environments
 
@@ -107,7 +106,6 @@ This allows to easily bootstrap a repository
 | `python/`    | Python development environment | `python3`, `uv`, `venvShellHook`   |
 | `terraform/` | Terraform infrastructure       | `terraform`, `tflint`              |
 | `opentofu/`  | OpenTofu IaC setup             | `opentofu`, `tflint`               |
-| `nix/`       | Shared logic                   | Common packages used across flakes |
 
 ---
 
