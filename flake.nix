@@ -48,6 +48,10 @@
             path = ./terraform;
             description = "Terraform flake";
           };
+          k8s = {
+            path = ./k8s;
+            description = "k8s flake";
+          };
         };
       };
       perSystem = { system, pkgs, ... }:
